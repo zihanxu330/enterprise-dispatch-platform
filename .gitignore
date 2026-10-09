@@ -1,0 +1,21 @@
+# 依赖与构建产物
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+dist/
+build/
+
+# 环境变量与密钥（绝不提交）
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*

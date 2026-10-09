@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>速派家政 · 银川</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0d0d;--ink2:#444;--ink3:#888;--ink4:#bbb;
+  --bg:#f7f7f5;--surface:#fff;--border:#e8e8e4;
+  --accent:#1a56db;--accent-soft:#eff4ff;
+  --green:#0f7a4e;--green-soft:#ecfdf5;
+  --amber:#b45309;--amber-soft:#fffbeb;
+  --red:#c0392b;--red-soft:#fff5f5;
+  --r:14px;--r-sm:8px;--r-xs:6px;
+  --sh:0 2px 8px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.04);
+  --sh-md:0 8px 24px rgba(0,0,0,.10),0 0 0 1px rgba(0,0,0,.05);
+}
+html,body{height:100%;background:#e0e0da;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+
+.app{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;background:var(--bg);position:relative;overflow:hidden}
+@media(min-width:520px){.app{margin-top:16px;height:calc(100vh - 32px);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.2)}}
+
+/* Nav */
+.nav{position:absolute;top:12px;right:12px;z-index:50;display:flex;gap:2px;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);padding:4px;border-radius:40px;box-shadow:var(--sh)}
+.nav-btn{padding:7px 14px;font-size:12px;font-weight:500;color:var(--ink2);border:none;background:none;border-radius:30px;cursor:pointer;transition:all .18s;white-space:nowrap;position:relative}
+.nav-btn.active{background:var(--ink);color:#fff}
+.dot{position:absolute;top:5px;right:8px;width:6px;height:6px;background:var(--red);border-radius:50%;display:none}
+.dot.show{display:block}
+
+/* Panels */
+.panel{display:none;position:absolute;inset:0;overflow:hidden}
+.panel.active{display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;padding:72px 16px 24px;overscroll-behavior:contain}
+.scroll::-webkit-scrollbar{display:none}
+
+/* Order panel — 上半地图 + 下半卡片 */
+#panel-order{flex-direction:column}
+#amap-wrap{flex:1;min-height:220px;position:relative;background:#dde4ee;overflow:hidden}
+#amap{position:absolute;inset:0}
+.map-hint{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--ink3);font-size:13px;pointer-events:none}
+.map-hint svg{opacity:.25}
+
+/* Bottom card — 固定在下方，不遮住地图 */
+.bottom-card{background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.10);overflow-y:auto;max-height:72%;flex-shrink:0}
+.bottom-card::-webkit-scrollbar{display:none}
+.card-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.card-inner{padding:14px 16px 24px}
+
+.search-row{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:var(--r-sm);padding:10px 12px;border:1px solid var(--border)}
+.search-row svg{flex-shrink:0;color:var(--ink3)}
+.search-input{flex:1;border:none;background:none;font-size:15px;color:var(--ink);outline:none}
+.search-input::placeholder{color:var(--ink4)}
+.loc-btn{flex-shrink:0;padding:6px 10px;background:var(--accent-soft);color:var(--accent);border:none;border-radius:var(--r-xs);font-size:12px;font-weight:500;cursor:pointer}
+
+.order-fields{display:none;margin-top:14px}
+.order-fields.open{display:block}
+
+/* Nearest */
+.nearest{display:flex;align-items:center;gap:10px;background:var(--accent-soft);border:1px solid #c7d7f8;border-radius:var(--r-sm);padding:10px 12px;margin-bottom:14px}
+.nearest-ico{width:34px;height:34px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nearest-ico svg{color:#fff}
+.nearest-name{font-size:13px;font-weight:600;color:var(--accent)}
+.nearest-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+.nearest-avail{font-size:11px;color:var(--green);margin-top:1px;font-weight:500}
+
+/* Form */
+.form-section{margin-bottom:12px}
+.form-label{font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.04em;margin-bottom:5px;display:block}
+.form-ctrl{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:14px;color:var(--ink);background:var(--surface);outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
+.form-ctrl:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+textarea.form-ctrl{height:56px;resize:none;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Price */
+.price-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:12px}
+.price-num{font-size:22px;font-weight:700;color:var(--ink)}
+.price-label{font-size:11px;color:var(--ink3);margin-top:2px}
+.price-meta{text-align:right;font-size:12px;color:var(--ink3)}
+
+/* CTA */
+.cta{width:100%;padding:13px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-sm);font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.01em;transition:opacity .15s}
+.cta:hover{opacity:.85}
+.cta:active{opacity:.7}
+.cta.outline{background:none;color:var(--ink);border:1.5px solid var(--border)}
+
+/* Section header */
+.sec-hd{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ink3);margin-bottom:10px;padding-top:4px;text-transform:uppercase}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat{background:var(--surface);border-radius:var(--r-sm);padding:12px;text-align:center;border:1px solid var(--border)}
+.stat-n{font-size:26px;font-weight:700;color:var(--ink);line-height:1}
+.stat-l{font-size:11px;color:var(--ink3);margin-top:4px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.card:hover{box-shadow:var(--sh)}
+.card-hd{display:flex;justify-content:space-between;align-items:flex-start}
+.card-title{font-size:15px;font-weight:600;color:var(--ink)}
+.card-sub{font-size:11px;color:var(--ink3);margin-top:3px}
+.card-meta{font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:6px;margin-top:8px}
+.card-divider{border:none;border-top:1px dashed var(--border);margin:10px 0}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-pending{background:var(--amber-soft);color:var(--amber)}
+.b-enroute{background:var(--green-soft);color:var(--green)}
+.b-done{background:#f0f0ee;color:var(--ink3)}
+.b-cancelled{background:var(--red-soft);color:var(--red)}
+
+/* Worker */
+.worker{display:flex;align-items:center;gap:10px;padding:10px 0}
+.w-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.w-name{font-size:14px;font-weight:500}
+.w-meta{font-size:11px;color:var(--ink3);margin-top:1px}
+.assign-btn{margin-left:auto;padding:6px 12px;background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0;border-radius:var(--r-xs);font-size:12px;font-weight:600;cursor:pointer}
+.assign-btn:hover{background:#d1fae5}
+
+/* Stars */
+.stars{display:flex;gap:4px}
+.star{font-size:24px;cursor:pointer;color:var(--border);transition:color .1s;user-select:none;line-height:1}
+.star.lit{color:#f59e0b}
+
+/* Track steps */
+.track-steps{display:flex;align-items:flex-start;margin:16px 0}
+.step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
+.step-dot{width:10px;height:10px;border-radius:50%;background:var(--border);z-index:1}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.step-line{position:absolute;top:4px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
+.step-line.done{background:var(--green)}
+.step:last-child .step-line{display:none}
+.step-label{font-size:10px;color:var(--ink3);margin-top:6px;text-align:center}
+.step-label.active{color:var(--accent);font-weight:600}
+.step-label.done{color:var(--green)}
+
+/* Sheet */
+.overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:flex-end;backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:88%;overflow-y:auto;padding:0 0 32px}
+.sheet::-webkit-scrollbar{display:none}
+.sheet-top{padding:12px 16px 0;display:flex;justify-content:center;position:sticky;top:0;background:var(--surface);z-index:1}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px}
+.sheet-close{position:absolute;right:16px;top:8px;width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink3)}
+.sheet-body{padding:12px 16px 0}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:2px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border:none}
+.info-key{font-size:13px;color:var(--ink3)}
+.info-val{font-size:13px;color:var(--ink);font-weight:500;text-align:right;max-width:60%}
+.ai-banner{background:var(--accent-soft);border:1px solid #c7d7f8;border-radius:var(--r-sm);padding:10px 12px;margin:12px 0}
+.ai-banner-title{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:3px}
+.ai-banner-body{font-size:12px;color:var(--ink2);line-height:1.5}
+
+/* Toast */
+.toast{position:absolute;top:70px;left:50%;transform:translateX(-50%) translateY(-8px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:500;white-space:nowrap;z-index:200;opacity:0;transition:all .25s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Empty */
+.empty{text-align:center;padding:48px 20px;color:var(--ink3)}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.4}
+.empty-txt{font-size:14px}
+
+/* Station */
+.station-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.st-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.st-name{font-size:14px;font-weight:600}
+.st-addr{font-size:12px;color:var(--ink3);margin-bottom:10px}
+.w-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--border)}
+.w-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.w-dot.on{background:var(--green)}
+.w-dot.off{background:var(--ink4)}
+.w-sm-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="toast" class="toast"></div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchTab('order')">下单</button>
+    <button class="nav-btn" onclick="switchTab('dispatch')">派单<span id="pending-dot" class="dot"></span></button>
+    <button class="nav-btn" onclick="switchTab('track')">订单</button>
+    <button class="nav-btn" onclick="switchTab('station')">站点</button>
+  </nav>
+
+  <!-- 下单面板 -->
+  <div id="panel-order" class="panel active">
+    <div id="amap-wrap">
+      <div id="amap"></div>
+      <div class="map-hint" id="map-hint">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <span>银川市家政服务地图</span>
+        <span style="font-size:11px">配置高德 Key 后显示实时地图</span>
+      </div>
+    </div>
+
+    <div class="bottom-card">
+      <div class="card-handle"></div>
+      <div class="card-inner">
+        <div class="search-row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="addr-input" placeholder="输入服务地址…" onfocus="expandForm()" oninput="onAddrInput(this.value)">
+          <button class="loc-btn" onclick="locateUser();expandForm()">📍 定位</button>
+        </div>
+
+        <div class="order-fields" id="order-fields">
+          <div style="height:12px"></div>
+          <div class="nearest">
+            <div class="nearest-ico">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div>
+              <div class="nearest-name" id="nearest-name">计算最近站点…</div>
+              <div class="nearest-sub" id="nearest-meta">请输入或定位服务地址</div>
+              <div class="nearest-avail" id="nearest-avail"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">服务类型</label>
+            <select class="form-ctrl" id="svc-type" onchange="onTypeChange()">
+              <option value="daily">日常保洁（3小时）</option>
+              <option value="deep">深度清洁（6小时）</option>
+              <option value="appliance">家电清洗</option>
+              <option value="moving">搬家整理</option>
+              <option value="nanny">月嫂护理</option>
+              <option value="elderly">养老陪护</option>
+            </select>
+          </div>
+
+          <div class="grid2">
+            <div class="form-section">
+              <label class="form-label">服务日期</label>
+              <input class="form-ctrl" type="date" id="svc-date">
+            </div>
+            <div class="form-section">
+              <label class="form-label">时间段</label>
+              <select class="form-ctrl" id="svc-time">
+                <option>09:00 – 12:00</option>
+                <option>10:00 – 13:00</option>
+                <option>13:00 – 16:00</option>
+                <option>14:00 – 17:00</option>
+                <option>16:00 – 19:00</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="form-section">
+              <label class="form-label">房间面积</label>
+              <select class="form-ctrl" id="svc-area">
+                <option>60㎡以下</option>
+                <option>60–100㎡</option>
+                <option>100–150㎡</option>
+                <option>150㎡以上</option>
+              </select>
+            </div>
+            <div class="form-section">
+              <label class="form-label">联系电话</label>
+              <input class="form-ctrl" type="tel" id="svc-phone" placeholder="手机号">
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">备注要求</label>
+            <textarea class="form-ctrl" id="svc-note" placeholder="特殊需求、家里有宠物等…"></textarea>
+          </div>
+
+          <div class="price-row">
+            <div>
+              <div class="price-num">¥ <span id="price-num">198</span></div>
+              <div class="price-label">预估服务费用</div>
+            </div>
+            <div class="price-meta">
+              <div id="price-type">日常保洁</div>
+              <div>含标准耗材</div>
+            </div>
+          </div>
+
+          <button class="cta" onclick="submitOrder()">立即呼叫服务</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 派单面板 -->
+  <div id="panel-dispatch" class="panel">
+    <div class="scroll">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="s-pending">0</div><div class="stat-l">待派单</div></div>
+        <div class="stat"><div class="stat-n" id="s-active">0</div><div class="stat-l">服务中</div></div>
+        <div class="stat"><div class="stat-n" id="s-done">0</div><div class="stat-l">已完成</div></div>
+      </div>
+      <div class="sec-hd">待处理</div>
+      <div id="dispatch-pending"></div>
+      <div class="sec-hd" style="margin-top:8px">进行中</div>
+      <div id="dispatch-active"></div>
+    </div>
+  </div>
+
+  <!-- 订单面板 -->
+  <div id="panel-track" class="panel">
+    <div class="scroll">
+      <div class="sec-hd">全部订单</div>
+      <div id="track-list"></div>
+    </div>
+  </div>
+
+  <!-- 站点面板 -->
+  <div id="panel-station" class="panel">
+    <div class="scroll">
+      <div class="sec-hd">银川直营站点</div>
+      <div id="station-list"></div>
+    </div>
+  </div>
+
+  <!-- 详情 sheet -->
+  <div class="overlay" id="overlay" onclick="closeSheet(event)">
+    <div class="sheet">
+      <div class="sheet-top">
+        <div class="sheet-handle"></div>
+        <button class="sheet-close" onclick="closeSheet()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
