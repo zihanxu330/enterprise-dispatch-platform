@@ -7,8 +7,8 @@ build/
 
 # 环境变量与密钥（绝不提交）
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.pem
 *.key
 
@@ -17,5 +17,17 @@ build/
 Thumbs.db
 
 # 日志
+logs/
 *.log
 npm-debug.log*
+
+# 上传/临时文件
+uploads/
+tmp/
+
+# IDE
+.idea/
+.vscode/
+
+# 数据库备份
+*.sql.bak
