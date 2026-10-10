@@ -148,12 +148,12 @@ Full reference: [docs/api.md](docs/api.md)
 
 ## 👥 My Contribution
 
-Team project (5 members) — I owned the **frontend** and the **backend**:
+Team project (5 members). I led the team and was responsible for the **client-side frontend and the backend**:
 
-- **Designed the order REST API** (`routes/orders.js`, `stations.js`, `config.js`): create → dispatch → complete lifecycle, manual dispatch fallback, 1-5 review that updates worker rating, nearest-station lookup with Haversine distance
-- **Built the DeepSeek AI dispatch engine** (`services/deepseek.js`): prompt design with dispatch criteria (distance / rating / skill match), robust JSON response parsing, and graceful degradation — order creation never blocks when the LLM call fails
-- **Implemented the customer frontend** (`frontend/app.js` + `index.html`): order flow, geolocation, pricing from `/api/config`, live status updates
-- **Wrote docs and tests**: 21-case black/white-box test plan, API reference, architecture doc, and a 6-check smoke test wired into GitHub Actions CI
+- Designed and implemented the order REST API (create / dispatch / complete / cancel / review)
+- Built the DeepSeek dispatch service with graceful degradation (orders stay `pending` and can be dispatched manually if the LLM call fails)
+- Added unified error handling, environment validation, Docker Compose and CI smoke tests
+- Wrote the API reference, architecture doc and 21 black/white-box test cases
 
 ## 📚 Documentation
 
