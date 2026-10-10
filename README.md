@@ -1,86 +1,126 @@
-# 家政速派调度系统（jiajia）
+# Enterprise AI Dispatch Platform
 
-家政服务智能派单系统：用户在网页下单，系统调用 **DeepSeek AI 引擎** 结合站点距离、工人评分、技能匹配度，自动为订单选择最优站点和工人完成派单。
+A full-stack **order dispatch management system** for service enterprises: customers place orders, and an **LLM dispatch engine** automatically routes each order to the optimal station and worker — balancing distance, service rating, and skill match. Built as a complete order lifecycle: **create → dispatch → complete**.
 
-## 技术栈
+> An end-to-end enterprise workflow system demonstrating LLM integration, geolocation services, REST API design, and multi-role operations.
 
-- **后端**：Node.js + Express（端口 3000）
-- **前端**：纯静态 HTML + JavaScript（fetch 调用后端 API）
-- **AI 派单**：DeepSeek API（`deepseek-chat`，低温度确保稳定输出）
-- **地图**：高德地图（定位、最近站点查询）
+---
 
-## 项目结构
+## ✨ Features
+
+- **LLM-powered dispatch decision**: DeepSeek (`deepseek-chat`, low temperature for stable output) picks the best station & worker from order info + candidate stations (distance, ETA, rating, skill, completed orders) and returns a dispatch rationale
+- **Multi-role workflow** (planned): user (place orders) → station (fulfill orders) → enterprise (dispatch center, operations dashboard, analytics)
+- **Geolocation**: AMap integration for locating customers and finding the nearest station
+- **Complete order lifecycle**: create → dispatch → complete
+- **Secure by design**: all API keys injected via environment variables, `.env` git-ignored
+
+---
+
+## 🏗 Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Backend | Node.js · Express (port 3000) |
+| Frontend | Static HTML + JavaScript (fetch → REST API) |
+| AI Engine | DeepSeek API (`deepseek-chat`) |
+| Geolocation | AMap (AutoNavi) |
+
+## 🧱 Architecture
 
 ```
-jiajia/
-├── backend/                  ← Node.js + Express 后端
-│   ├── server.js             ← 主入口，端口 3000
+Vue/Static Frontend (future: Vue3)
+        │  REST API
+        ▼
+Express Backend ──┬── routes/orders.js     (order CRUD + dispatch)
+                  ├── routes/stations.js   (stations + nearest lookup)
+                  ├── routes/config.js     (pricing, service types)
+                  └── services/deepseek.js (LLM dispatch engine, reads key from env)
+        │
+        ▼
+Data: in-memory seed (data/seed.js) → planned: MySQL / MongoDB persistence
+```
+
+## 📁 Project Structure
+
+```
+enterprise-dispatch-platform/
+├── backend/                  ← Node.js + Express backend
+│   ├── server.js             ← main entry, port 3000
 │   ├── package.json
-│   ├── data/seed.js          ← 初始数据（站点、订单、价格表）
+│   ├── data/seed.js          ← initial data (stations, orders, pricing)
 │   ├── routes/
-│   │   ├── orders.js         ← 订单 CRUD + 派单
-│   │   ├── stations.js       ← 站点查询 + 最近站点
-│   │   └── config.js         ← 价格表、服务类型
-│   └── services/deepseek.js  ← AI 派单引擎（API Key 从环境变量读取）
-├── frontend/                 ← 纯静态前端
-│   ├── index.html            ← UI 结构 + CSS
-│   └── app.js                ← 交互逻辑（fetch 调用 API）
-└── signature/                ← 附加：jiajia 签名动画作品（HTML 小样）
+│   │   ├── orders.js         ← order CRUD + dispatch
+│   │   ├── stations.js       ← station queries + nearest station
+│   │   └── config.js         ← pricing, service types
+│   └── services/deepseek.js  ← AI dispatch engine (API key from env)
+├── frontend/                 ← static frontend
+│   ├── index.html            ← UI structure + CSS
+│   └── app.js                ← interaction logic (fetch → API)
+└── signature/                ← bonus: handwritten-signature animation demos
 ```
 
-## 快速启动
+---
 
-### 1. 配置环境变量
+## 🚀 Quick Start
+
+### 1. Configure environment variables
 
 ```bash
 cd backend
 copy ..\.env.example .env   # Windows
-# 或 cp ../.env.example .env  (Linux/macOS)
+# cp ../.env.example .env   # Linux / macOS
 ```
 
-编辑 `.env`，填入你的 DeepSeek API Key；打开 `frontend/app.js`，将高德 Key 替换为你自己的。
+Edit `.env` with your DeepSeek API Key; replace the AMap key in `frontend/app.js` with your own.
 
-### 2. 安装并启动后端
+### 2. Install & start the backend
 
 ```bash
 cd backend
 npm install
 npm start
-# 或开发模式（自动重启）：
+# development mode (auto-restart):
 npm run dev
 ```
 
-后端启动后控制台会打印：`✅ 家政速派后端已启动：http://localhost:3000`
+Backend prints: `✅ 家政速派后端已启动：http://localhost:3000`
 
-### 3. 打开前端
+### 3. Open the frontend
 
-直接用浏览器打开 `frontend/index.html`，或访问后端托管的地址 `http://localhost:3000`
+Open `frontend/index.html` in a browser, or visit the backend-served page at `http://localhost:3000`
 
-## API 接口一览
+---
 
-| 方法 | 路径 | 说明 |
+## 📡 API Overview
+
+| Method | Path | Description |
 | --- | --- | --- |
-| GET | /api/orders | 获取所有订单 |
-| POST | /api/orders | 创建新订单 |
-| PUT | /api/orders/:id/dispatch | 派单给工人 |
-| PUT | /api/orders/:id/complete | 完结订单 |
-| GET | /api/stations | 获取所有站点 |
-| GET | /api/stations/nearest?lat=&lng= | 查询最近站点 |
-| GET | /api/config | 获取价格/类型 |
+| GET | /api/orders | List all orders |
+| POST | /api/orders | Create a new order |
+| PUT | /api/orders/:id/dispatch | Dispatch order to a worker |
+| PUT | /api/orders/:id/complete | Complete an order |
+| GET | /api/stations | List all stations |
+| GET | /api/stations/nearest?lat=&lng= | Find nearest station |
+| GET | /api/config | Get pricing / service types |
 
-## 功能说明
+---
 
-- **AI 智能派单**：根据订单信息（类型、地址、时间）+ 候选站点（距离、ETA、工人评分/技能/完单数），由 DeepSeek 选出最优站点和工人，并返回派单理由
-- **站点管理**：多站点就近服务，查询客户最近站点
-- **订单全流程**：下单 → 派单 → 完成
+## 🗺 Roadmap
 
-## V5 规划（单系统多角色）
+- [ ] **Multi-role system**: user / station / enterprise role-based access
+- [ ] **Persistence**: replace in-memory seed with MySQL / MongoDB
+- [ ] **Docker**: `docker-compose.yml` for one-command deployment
+- [ ] **Frontend upgrade**: migrate to Vue3
+- [ ] **CI/CD**: GitHub Actions build & test pipeline
+- [ ] **Unit tests**: controller + service tests
 
-- **user（用户）**：下单、进行中订单、我的订单
-- **station（站点）**：待接订单、已接订单、服务师管理、订单进度
-- **enterprise（企业）**：运营大屏、AI 派单中心、站点管理、服务师管理、统计分析
+---
 
-## 说明
+## 🔒 Security Notes
 
-- API Key 均通过环境变量注入，`.env` 已被 git 忽略，请勿提交真实 Key
-- 数据默认存储在内存（`data/seed.js`），如需持久化可替换为 MongoDB / MySQL
+- All API keys are injected via environment variables; `.env` is git-ignored — never commit real keys
+- Data is currently stored in memory (`data/seed.js`); swap in a database for production use
+
+## 📄 License
+
+[MIT](LICENSE)
