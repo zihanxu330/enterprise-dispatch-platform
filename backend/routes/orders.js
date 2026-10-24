@@ -46,8 +46,8 @@ router.post('/', async (req, res) => {
     const result = await pickBestDispatch(newOrder, stationsWithDistance);
     console.log(`✅ [AI派单]`, result);
     const chosenStation = stations.find(s => s.id === result.stationId);
-    const chosenWorker = stations.flatMap(s => s.workers).find(w => w.id === result.workerId);
-    if (chosenStation && chosenWorker && chosenWorker.status === 'available') {
+    const chosenWorker = chosenStation?.workers.find(w => w.id === result.workerId);
+    if (newOrder.status === 'pending' && chosenStation && chosenWorker && chosenWorker.status === 'available') {
       newOrder.station = result.stationId;
       newOrder.worker = result.workerId;
       newOrder.status = 'enroute';
@@ -70,6 +70,7 @@ router.put('/:id/dispatch', (req, res) => {
   const worker = stations.flatMap(s => s.workers).find(w => w.id === workerId);
   if (!worker) return res.status(404).json({ error: '工人不存在' });
   if (worker.status !== 'available') return res.status(400).json({ error: '该工人当前不可用' });
+  order.station = stations.find(s => s.workers.some(w => w.id === workerId)).id;
   order.worker = workerId;
   order.status = 'enroute';
   order.aiDispatch = false;
@@ -81,6 +82,7 @@ router.put('/:id/dispatch', (req, res) => {
 router.put('/:id/complete', (req, res) => {
   const order = orders.find(o => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '订单不存在' });
+  if (order.status !== 'enroute') return res.status(400).json({ error: '只能完结服务中的订单' });
   order.status = 'done';
   if (order.worker) {
     const worker = stations.flatMap(s => s.workers).find(w => w.id === order.worker);

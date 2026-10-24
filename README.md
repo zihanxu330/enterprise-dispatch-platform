@@ -1,190 +1,104 @@
-# Enterprise AI Dispatch Platform
+# Enterprise Dispatch Platform · 家政速派
 
-![license](https://img.shields.io/badge/license-MIT-blue)
-![node](https://img.shields.io/badge/node-%3E%3D18-green)
-[![CI](https://github.com/zihanxu330/enterprise-dispatch-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/zihanxu330/enterprise-dispatch-platform/actions/workflows/ci.yml)
+**一个展示订单生命周期的全栈调度应用。** 用户创建订单，调度员选择站点与工人，完成服务后记录评价；可选接入 DeepSeek 辅助派单。
 
-A full-stack **order dispatch management system** for service enterprises: customers place orders, and an **LLM dispatch engine** automatically routes each order to the optimal station and worker — balancing distance, service rating, and skill match. Built as a complete order lifecycle: **create → dispatch → complete**.
+A local full-stack demo of order creation, dispatch, completion and review, built with Node.js, Express and plain JavaScript.
 
-> 家政速派调度系统：用户在网页下单，DeepSeek AI 引擎结合站点距离、工人评分与技能匹配，自动完成派单。
+[界面预览](#screenshots) · [本地运行](#quick-start) · [API 文档](docs/api.md) · [MIT License](LICENSE)
 
----
+## Screenshots
 
-## ✨ Features
-
-- **LLM-powered dispatch decision**: DeepSeek (`deepseek-chat`, temperature 0.2 for stable output) picks the best station & worker from candidate stations (distance, ETA, rating, skill, completed orders) and returns a dispatch rationale
-- **Complete order lifecycle**: create → dispatch → complete, plus cancel and review (1-5 rating updates worker average)
-- **Geolocation**: Haversine distance + AMap integration for finding the nearest station
-- **Graceful AI degradation**: if the LLM call fails, the order stays `pending` and manual dispatch remains available — order creation never blocks on AI
-- **Secure by design**: all API keys injected via environment variables, `.env` git-ignored
-- **One-command start**: `docker compose up` (in-memory demo data, no database setup needed)
-
-## 📸 Screenshots
-
-| Customer order page | Dispatch board |
+| 用户下单 | 派单工作台 |
 | --- | --- |
-| ![](docs/images/customer.png) | ![](docs/images/dispatch.png) |
+| ![用户下单页面](docs/images/customer.png) | ![派单工作台](docs/images/dispatch.png) |
 
-| Order list | Station & worker view |
+| 订单列表 | 站点与工人 |
 | --- | --- |
-| ![](docs/images/orders.png) | ![](docs/images/stations.png) |
+| ![订单列表](docs/images/orders.png) | ![站点与工人管理](docs/images/stations.png) |
 
-> *Demo data shown; replace with your own screenshots if needed (PNG, ≤500KB each).*
+## Features
 
-## 🏗 Tech Stack
+- 订单创建、人工派单、完结、取消和服务评价。
+- 使用站点坐标计算 Haversine 距离，展示候选站点。
+- 可选 DeepSeek 辅助派单，返回候选站点、工人和理由。
+- 无 API Key 时使用人工派单，不发送模型请求。
+- 内存演示数据，启动无需配置数据库；重启后恢复初始数据。
 
-| Layer | Technology |
-| --- | --- |
-| Backend | Node.js (≥18) · Express |
-| Frontend | Static HTML + JavaScript (fetch → REST API) |
-| AI Engine | DeepSeek API (`deepseek-chat`) |
-| Geolocation | AMap (AutoNavi) / Haversine |
-| Data | In-memory seed (`data/seed.js`; MySQL planned) |
-| Ops | Docker Compose · GitHub Actions CI |
+## Quick start
 
-## 🧱 Architecture
-
-```mermaid
-flowchart LR
-  C[Customer Client] --> API[Express API]
-  API --> O[POST /api/orders]
-  O -->|201 + order| C
-  O -.async.-> AI[DeepSeek API]
-  AI -->|stationId workerId reason| O
-  O -->|update| DB[(in-memory seed)]
-```
-
-Order state flow:
-
-```mermaid
-stateDiagram-v2
-  [*] --> pending
-  pending --> enroute : AI dispatch / manual dispatch
-  pending --> cancelled : customer cancel
-  enroute --> done : worker completes
-  done --> [*]
-```
-
-See [docs/architecture.md](docs/architecture.md) for the full request flow and degradation design.
-
-## 📁 Project Structure
-
-```
-enterprise-dispatch-platform/
-├── backend/                  ← Node.js + Express backend
-│   ├── server.js             ← main entry, port 3000
-│   ├── package.json
-│   ├── Dockerfile
-│   ├── middlewares/          ← errorHandler + asyncHandler
-│   ├── data/seed.js          ← initial data (stations, orders, pricing)
-│   ├── routes/
-│   │   ├── orders.js         ← order CRUD + dispatch + review
-│   │   ├── stations.js       ← station queries + nearest lookup
-│   │   └── config.js         ← pricing, service types
-│   ├── services/deepseek.js  ← AI dispatch engine (key from env)
-│   └── test/smoke.js         ← black-box API smoke tests
-├── frontend/                 ← static frontend
-│   ├── index.html            ← UI structure + CSS
-│   └── app.js                ← interaction logic (fetch → API)
-├── docs/
-│   ├── api.md                ← full API reference
-│   ├── architecture.md       ← layering + request flow + state machine
-│   ├── test-cases.md         ← 21 black/white-box test cases
-│   └── images/               ← screenshots
-├── .github/workflows/ci.yml  ← CI: install + lint + smoke test
-├── docker-compose.yml        ← one-command start
-├── .env.example
-├── .gitignore
-├── LICENSE
-└── README.md
-```
-
-## 🚀 Quick Start
-
-### Option A — Docker Compose (recommended)
+### Local · Node.js 18+
 
 ```bash
 git clone https://github.com/zihanxu330/enterprise-dispatch-platform.git
-cd enterprise-dispatch-platform
-cp .env.example .env          # fill in DEEPSEEK_API_KEY (optional)
-docker compose up
-```
-
-Open http://localhost:3000 — no database or Node.js setup needed.
-
-### Option B — Local (Node.js ≥ 18)
-
-```bash
-cd backend
-npm install
-cp ../.env.example ../.env    # fill in DEEPSEEK_API_KEY (optional)
+cd enterprise-dispatch-platform/backend
+npm ci
 npm start
 ```
 
-Backend prints `✅ 家政速派后端已启动：http://localhost:3000`; open http://localhost:3000.
+打开 [http://localhost:3000](http://localhost:3000)。无需 API Key 即可体验人工派单。
 
-### Option C — CLI test
+启用 AI 派单时，在启动服务的终端设置 `DEEPSEEK_API_KEY`。PowerShell 示例：
 
-```bash
-cd backend
-npm test                      # runs the 6-case smoke suite
+```powershell
+$env:DEEPSEEK_API_KEY = "your-api-key"
+npm start
 ```
 
-## 📡 API Overview
+本地 Node 启动读取进程环境变量；Docker Compose 则从仓库根目录的 `.env` 读取配置。
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | /api/orders | List all orders |
-| POST | /api/orders | Create an order (async AI dispatch) |
-| PUT | /api/orders/:id/dispatch | Dispatch order to a worker |
-| PUT | /api/orders/:id/complete | Complete an order |
-| DELETE | /api/orders/:id | Cancel a pending order |
-| POST | /api/orders/:id/review | Rate a completed order (1-5) |
-| GET | /api/stations | List all stations |
-| GET | /api/stations/nearest?lat=&lng= | Find nearest station |
-| GET | /api/config | Get pricing / service types |
+### Docker Compose
 
-Full reference: [docs/api.md](docs/api.md)
+在仓库根目录，将 `.env.example` 复制为 `.env`，不使用 AI 时将 Key 留空。
 
-## 👥 My Contribution
+```bash
+docker compose up --build
+```
 
-Team project (5 members). I led the team and was responsible for the **client-side frontend and the backend**:
+同样访问 [http://localhost:3000](http://localhost:3000)。
 
-- Designed and implemented the order REST API (create / dispatch / complete / cancel / review)
-- Built the DeepSeek dispatch service with graceful degradation (orders stay `pending` and can be dispatched manually if the LLM call fails)
-- Added unified error handling, environment validation, Docker Compose and CI smoke tests
-- Wrote the API reference, architecture doc and 21 black/white-box test cases
+## Request flow
 
-## 📚 Documentation
+```mermaid
+flowchart LR
+  U[Browser] --> API[Express REST API]
+  API --> O[In-memory orders]
+  API --> M[Manual dispatch]
+  API -. optional .-> L[DeepSeek]
+  M --> O
+  L --> O
+```
 
-- [API reference](docs/api.md)
-- [Architecture](docs/architecture.md)
-- [Test cases](docs/test-cases.md)
+订单状态：`pending → enroute → done`；待派单订单可以转为 `cancelled`。模型调用失败时，订单保持待派单状态。
 
-## ❓ FAQ
+## Development
 
-- **Order created but never dispatched?** Check the backend log for `[AI派单] 失败` — this means the DeepSeek call failed (missing/expired key, or no available worker). Use manual dispatch (`PUT /api/orders/:id/dispatch`) as fallback.
-- **Missing DEEPSEEK_API_KEY warning?** Copy `.env.example` to `.env` and fill in your key. AI dispatch is disabled without it, but manual dispatch still works.
-- **Data resets on restart?** Yes — demo data is in-memory by design. MySQL persistence is on the roadmap.
-- **Port already in use?** Set `PORT` in `.env`.
+从 `backend/` 运行：
 
-## 🗺 Roadmap
+```bash
+npm test
+```
 
-- [x] AI dispatch engine (DeepSeek) with graceful degradation
-- [x] Unified error handling + env validation
-- [x] Docker Compose + CI smoke tests
-- [x] Docs: API reference, architecture, test cases
-- [ ] MySQL persistence (connection pool) + `docs/schema.sql`
-- [ ] Multi-role auth: user / station / enterprise (JWT, bcrypt)
-- [ ] Vue3 frontend upgrade
-- [ ] Request validation (joi/zod) + rate limiting
+冒烟检查使用本地服务和演示数据，不请求 DeepSeek。
 
-## 🔒 Security Notes
+| 目录 | 内容 |
+| --- | --- |
+| `backend/routes/` | 订单、站点与配置 API |
+| `backend/services/` | DeepSeek 客户端 |
+| `backend/data/seed.js` | 站点、工人和订单演示数据 |
+| `frontend/` | HTML、CSS 与 JavaScript 界面 |
+| `docs/` | API、架构与测试用例 |
 
-- All API keys are injected via environment variables; `.env` is git-ignored — never commit real keys
-- AI logs never include full request bodies or keys
-- SQL (once MySQL is added) must use parameterized queries only
+## Project context
 
-## 📄 License
+这是一个五人课程团队项目。我负责客户端前端与后端相关实现，项目用于展示业务流程、API 集成与工程实践。
 
-[MIT](LICENSE)
+## Scope
+
+- 当前是本地演示应用，未实现用户认证、角色权限或数据库持久化。
+- AI 提供候选派单建议，不保证全局最优；实际业务需增加人工审核与约束。
+- 当前站点距离使用直线距离近似，不等于实际道路距离或实时交通 ETA。
+- 外部模型集成需要单独配置并验证；自动检查覆盖本地流程。
+
+[API reference](docs/api.md) · [Architecture](docs/architecture.md) · [Test cases](docs/test-cases.md)
+
+Licensed under [MIT](LICENSE).

@@ -10,6 +10,9 @@ const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
  * @returns {object} { stationId, workerId, reason }
  */
 async function pickBestDispatch(order, stationsWithDistance) {
+  if (!DEEPSEEK_API_KEY) {
+    throw new Error('未配置 DEEPSEEK_API_KEY，请使用人工派单');
+  }
   const prompt = `
 你是一个家政调度系统的智能派单引擎。请根据以下信息，选出最合适的站点和工人来服务这个订单。
 
